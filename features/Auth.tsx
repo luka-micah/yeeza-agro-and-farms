@@ -11,35 +11,17 @@ import {
   MapPin, 
   FileText,
   CreditCard,
-  ShieldCheck
+  ShieldCheck,
+  UserCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { UserRole, UserStatus, User } from '../types';
+import { BrandLogo } from '../App';
 
 interface AuthPageProps {
   mode: 'login' | 'register';
   onAuth: (user: User) => void;
 }
-
-const BrandLogo: React.FC<{ size?: 'sm' | 'md' | 'lg', inverse?: boolean }> = ({ size = 'md', inverse = false }) => {
-  const dimensions = {
-    sm: 'h-8 w-8',
-    md: 'h-12 w-12',
-    lg: 'h-20 w-20'
-  };
-  return (
-    <div className="flex items-center space-x-4">
-      <img 
-        src="https://raw.githubusercontent.com/ai-studio-projects/logos/main/yeeza-farm-logo.png" 
-        alt="Yeeza Farm Logo" 
-        className={`${dimensions[size]} object-contain`}
-      />
-      <div className="flex flex-col -space-y-1">
-        <span className={`${size === 'lg' ? 'text-4xl' : 'text-2xl'} font-black ${inverse ? 'text-white' : 'text-brand-500'} tracking-tight`}>YEEZA</span>
-        <span className={`${size === 'lg' ? 'text-2xl' : 'text-lg'} font-bold ${inverse ? 'text-primary-100' : 'text-primary-500'}`}>FARM</span>
-      </div>
-    </div>
-  );
-};
 
 const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   const { role } = useParams<{ role: string }>();
@@ -61,8 +43,21 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
 
   const totalSteps = mode === 'login' ? 1 : 5;
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleNext = () => setStep(s => Math.min(s + 1, totalSteps));
   const handleBack = () => setStep(s => Math.max(s - 1, 1));
+
+  const setDemoCredentials = (type: 'admin' | 'superadmin') => {
+    if (type === 'superadmin') {
+      setFormData(prev => ({ ...prev, email: 'superadmin@yeezafarm.com', password: 'Password@123' }));
+    } else {
+      setFormData(prev => ({ ...prev, email: 'admin@yeezafarm.com', password: 'Password@123' }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,14 +66,25 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
       return;
     }
 
+    let assignedRole = role?.toUpperCase() === 'COLD-ROOM' ? UserRole.COLD_ROOM_OWNER : UserRole.FARMER;
+
+    // Admin demo credentials logic
+    if (mode === 'login') {
+      if (formData.email === 'superadmin@yeezafarm.com' && formData.password === 'Password@123') {
+        assignedRole = UserRole.SUPER_ADMIN;
+      } else if (formData.email === 'admin@yeezafarm.com' && formData.password === 'Password@123') {
+        assignedRole = UserRole.ADMIN;
+      }
+    }
+
     const mockUser: User = {
       id: Math.random().toString(36).substr(2, 9),
       email: formData.email || 'user@yeeza.com',
       phone: formData.phone || '08012345678',
-      role: role?.toUpperCase() === 'COLD-ROOM' ? UserRole.COLD_ROOM_OWNER : UserRole.FARMER,
+      role: assignedRole,
       status: UserStatus.ACTIVE,
-      firstName: formData.firstName || 'Demo',
-      lastName: formData.lastName || 'User'
+      firstName: assignedRole === UserRole.SUPER_ADMIN ? 'Super' : assignedRole === UserRole.ADMIN ? 'System' : (formData.firstName || 'Demo'),
+      lastName: assignedRole === UserRole.SUPER_ADMIN ? 'Admin' : assignedRole === UserRole.ADMIN ? 'Admin' : (formData.lastName || 'User')
     };
 
     localStorage.setItem('yeeza_user', JSON.stringify(mockUser));
@@ -91,7 +97,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col md:flex-row">
       {/* Left Panel - Branding */}
-      <div className="md:w-1/3 bg-brand-500 p-8 md:p-16 text-white flex flex-col justify-between relative overflow-hidden shrink-0">
+      <div className="md:w-1/3 bg-brand-800 p-8 md:p-16 text-white flex flex-col justify-between relative overflow-hidden shrink-0">
         <div className="z-10">
           <Link to="/" className="mb-16 block">
             <BrandLogo inverse size="lg" />
@@ -111,7 +117,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
           <p className="text-sm font-bold italic leading-relaxed text-primary-50">"Yeeza Farm gave me the peace of mind I needed. My cattle are safe, and my profits are up by 40%."</p>
           <div className="mt-6 flex items-center space-x-4">
             <div className="w-12 h-12 rounded-2xl border-4 border-white/20 bg-primary-500 overflow-hidden">
-               <img src="https://picsum.photos/seed/farmer/100/100" className="w-full h-full object-cover" alt="User" />
+               <img src="https://images.unsplash.com/photo-1524024973431-2ad916746881?q=80&w=100&auto=format&fit=crop" className="w-full h-full object-cover" alt="User" />
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-widest text-white">Musa Bitrus</p>
@@ -143,11 +149,48 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
             </div>
           )}
 
+          {mode === 'login' && (
+            <div className="mb-8 flex flex-col sm:flex-row gap-3">
+              <button 
+                type="button"
+                onClick={() => setDemoCredentials('superadmin')}
+                className="flex-1 flex items-center justify-center gap-2 p-4 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-2xl border border-primary-100 dark:border-primary-800 text-xs font-black uppercase tracking-widest transition-all hover:bg-primary-100"
+              >
+                <ShieldAlert className="w-4 h-4" /> Demo Super Admin
+              </button>
+              <button 
+                type="button"
+                onClick={() => setDemoCredentials('admin')}
+                className="flex-1 flex items-center justify-center gap-2 p-4 bg-secondary-50 dark:bg-secondary-900/20 text-secondary-700 dark:text-secondary-400 rounded-2xl border border-secondary-100 dark:border-secondary-800 text-xs font-black uppercase tracking-widest transition-all hover:bg-secondary-100"
+              >
+                <UserCheck className="w-4 h-4" /> Demo Admin
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-8 animate-fadeIn">
             {mode === 'login' ? (
               <>
-                <InputField label="Registered Email" icon={<Mail className="w-5 h-5" />} type="email" placeholder="john@example.com" required />
-                <InputField label="Security Password" icon={<Lock className="w-5 h-5" />} type="password" placeholder="••••••••" required />
+                <InputField 
+                  label="Registered Email" 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  icon={<Mail className="w-5 h-5" />} 
+                  type="email" 
+                  placeholder="john@example.com" 
+                  required 
+                />
+                <InputField 
+                  label="Security Password" 
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  icon={<Lock className="w-5 h-5" />} 
+                  type="password" 
+                  placeholder="••••••••" 
+                  required 
+                />
                 <div className="flex items-center justify-between">
                   <label className="flex items-center text-xs font-bold text-gray-500 cursor-pointer">
                     <input type="checkbox" className="mr-3 w-5 h-5 rounded-lg border-gray-200 text-primary-500 focus:ring-primary-100" />
@@ -161,21 +204,21 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                 {step === 1 && (
                   <div className="space-y-8">
                     <div className="grid grid-cols-2 gap-6">
-                      <InputField label="First Name" placeholder="John" required />
-                      <InputField label="Last Name" placeholder="Doe" required />
+                      <InputField label="First Name" name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="John" required />
+                      <InputField label="Last Name" name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Doe" required />
                     </div>
-                    <InputField label="Primary Email" icon={<Mail className="w-5 h-5" />} type="email" placeholder="john@example.com" />
-                    <InputField label="Mobile Phone" icon={<Smartphone className="w-5 h-5" />} placeholder="+234 ..." />
+                    <InputField label="Primary Email" name="email" value={formData.email} onChange={handleInputChange} icon={<Mail className="w-5 h-5" />} type="email" placeholder="john@example.com" />
+                    <InputField label="Mobile Phone" name="phone" value={formData.phone} onChange={handleInputChange} icon={<Smartphone className="w-5 h-5" />} placeholder="+234 ..." />
                   </div>
                 )}
                 {step === 2 && (
                   <div className="space-y-8">
-                    <InputField label={role === 'cold-room' ? 'Facility Brand' : 'Farm Entity Name'} icon={<Building2 className="w-5 h-5" />} placeholder="Green Pastures Ltd" />
-                    <InputField label="Registered Address" icon={<MapPin className="w-5 h-5" />} placeholder="12 Agro Road, Jos" />
+                    <InputField label={role === 'cold-room' ? 'Facility Brand' : 'Farm Entity Name'} name="farmName" value={formData.farmName} onChange={handleInputChange} icon={<Building2 className="w-5 h-5" />} placeholder="Green Pastures Ltd" />
+                    <InputField label="Registered Address" name="address" value={formData.address} onChange={handleInputChange} icon={<MapPin className="w-5 h-5" />} placeholder="12 Agro Road, Jos" />
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label className="text-xs font-black text-brand-500 uppercase tracking-widest">LGA / City</label>
-                        <select className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary-50">
+                        <select name="city" value={formData.city} onChange={handleInputChange} className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary-50">
                           <option>Jos North</option><option>Jos South</option><option>Barkin Ladi</option>
                         </select>
                       </div>
@@ -197,8 +240,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                 )}
                 {step === 4 && (
                   <div className="space-y-8">
-                    <InputField label="Target Bank" icon={<Building2 className="w-5 h-5" />} placeholder="Zenith Bank" />
-                    <InputField label="Account ID" icon={<CreditCard className="w-5 h-5" />} placeholder="0123456789" />
+                    <InputField label="Target Bank" name="bankName" value={formData.bankName} onChange={handleInputChange} icon={<Building2 className="w-5 h-5" />} placeholder="Zenith Bank" />
+                    <InputField label="Account ID" name="accountNumber" value={formData.accountNumber} onChange={handleInputChange} icon={<CreditCard className="w-5 h-5" />} placeholder="0123456789" />
                     <div className="p-6 bg-accent-50 rounded-[2rem] border border-accent-100 flex items-start gap-4">
                       <ShieldCheck className="w-6 h-6 text-accent-600 shrink-0" />
                       <p className="text-xs font-bold text-accent-700 leading-relaxed">Payouts are secured via Paystack and verified against your CAC registration.</p>
@@ -207,8 +250,8 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                 )}
                 {step === 5 && (
                   <div className="space-y-8">
-                    <InputField label="Create Password" icon={<Lock className="w-5 h-5" />} type="password" placeholder="••••••••" />
-                    <InputField label="Repeat Password" icon={<Lock className="w-5 h-5" />} type="password" placeholder="••••••••" />
+                    <InputField label="Create Password" name="password" value={formData.password} onChange={handleInputChange} icon={<Lock className="w-5 h-5" />} type="password" placeholder="••••••••" />
+                    <InputField label="Repeat Password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} icon={<Lock className="w-5 h-5" />} type="password" placeholder="••••••••" />
                     <label className="flex items-start text-[10px] font-bold text-gray-400 cursor-pointer">
                       <input type="checkbox" className="mt-1 mr-4 w-5 h-5 rounded-lg border-gray-200 text-primary-500" required />
                       <span className="leading-relaxed">I consent to the <span className="text-primary-600 font-black">YEEZA FARM</span> terms of service and standard operating procedures for Plateau State agriculture.</span>
@@ -224,7 +267,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                   Back
                 </button>
               )}
-              <button type="submit" className="flex-[2] px-8 py-5 bg-brand-500 text-white font-black rounded-2xl hover:bg-brand-600 transform hover:-translate-y-1 transition-all shadow-2xl shadow-brand-100 flex items-center justify-center text-sm uppercase tracking-widest">
+              <button type="submit" className="flex-[2] px-8 py-5 bg-brand-800 text-white font-black rounded-2xl hover:bg-brand-900 transform hover:-translate-y-1 transition-all shadow-2xl shadow-brand-100 flex items-center justify-center text-sm uppercase tracking-widest">
                 {step === totalSteps ? (mode === 'login' ? 'Enter Dashboard' : 'Finalize Account') : 'Continue Process'}
               </button>
             </div>
@@ -244,14 +287,26 @@ const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   );
 };
 
-const InputField: React.FC<{ label: string, icon?: React.ReactNode, type?: string, placeholder?: string, required?: boolean, value?: string, disabled?: boolean }> = ({ label, icon, type = 'text', placeholder, required, value, disabled }) => (
+const InputField: React.FC<{ 
+  label: string, 
+  name?: string,
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void,
+  icon?: React.ReactNode, 
+  type?: string, 
+  placeholder?: string, 
+  required?: boolean, 
+  value?: string, 
+  disabled?: boolean 
+}> = ({ label, name, onChange, icon, type = 'text', placeholder, required, value, disabled }) => (
   <div className="space-y-3">
     <label className="text-xs font-black text-brand-500 uppercase tracking-widest">{label}</label>
     <div className="relative group">
       {icon && <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-primary-500 transition-colors">{icon}</div>}
       <input 
+        name={name}
+        onChange={onChange}
         type={type} 
-        defaultValue={value} 
+        value={value} 
         disabled={disabled} 
         className={`w-full ${icon ? 'pl-14' : 'px-6'} pr-6 py-5 bg-white border border-gray-200 rounded-2xl font-bold text-sm outline-none transition-all placeholder:text-gray-300 focus:ring-4 focus:ring-primary-50 focus:border-primary-100 ${disabled ? 'bg-gray-50/50 cursor-not-allowed text-gray-400' : ''}`}
         placeholder={placeholder} 

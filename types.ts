@@ -67,7 +67,7 @@ export interface Booking {
   itemName: string;
   startDate: string;
   endDate: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'paid' | 'approved' | 'rejected' | 'completed';
   totalPrice: number;
   durationDays: number;
 }

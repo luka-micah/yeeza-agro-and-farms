@@ -79,7 +79,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ user }) => {
           <div className="lg:w-1/2 relative">
              <div className="absolute top-0 right-0 w-full h-full bg-primary-200/40 rounded-[4rem] -rotate-3 -z-10"></div>
              <img 
-               src="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?q=80&w=1000&auto=format&fit=crop" 
+               src="https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=1000&auto=format&fit=crop" 
                alt="Livestock Farm" 
                className="rounded-[3.5rem] w-full h-[550px] object-cover shadow-2xl border-4 border-white"
              />

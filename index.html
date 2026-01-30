@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -39,20 +40,23 @@
                             50: '#F5F5F5',
                             500: '#212121', // Neutral Dark for Text
                             600: '#121212',
+                            800: '#0F172A', // Dark Mode Base
+                            900: '#020617', // Dark Mode Surface
                         }
                     },
                     animation: {
-                        fadeIn: 'fadeIn 0.4s ease-out',
-                        zoomIn: 'zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                        fadeIn: 'fadeIn 0.3s ease-out',
+                        zoomIn: 'zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                         slideInLeft: 'slideInLeft 0.3s ease-out',
+                        bounceSlow: 'bounce 3s infinite',
                     },
                     keyframes: {
                         fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '0%': { opacity: '0', transform: 'translateY(8px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         },
                         zoomIn: {
-                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '0%': { opacity: '0', transform: 'scale(0.97)' },
                             '100%': { opacity: '1', transform: 'scale(1)' },
                         },
                         slideInLeft: {
@@ -69,6 +73,11 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         * { -webkit-tap-highlight-color: transparent; }
+        .dark body { background-color: #020617; color: #f1f5f9; }
+        
+        /* Custom Tooltip Classes */
+        .tooltip-trigger:hover .tooltip-content { opacity: 1; visibility: visible; transform: translateY(0); }
+        .tooltip-content { opacity: 0; visibility: hidden; transform: translateY(5px); transition: all 0.2s; }
     </style>
 <script type="importmap">
 {
@@ -84,7 +93,7 @@
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
-<body class="bg-[#F9FAFB] text-brand-500 overflow-x-hidden">
+<body class="bg-[#F9FAFB] text-brand-500 overflow-x-hidden transition-colors duration-300">
     <div id="root"></div>
 <script type="module" src="/index.tsx"></script>
 </body>
